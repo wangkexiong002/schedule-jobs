@@ -1,0 +1,21 @@
+name: Weekly mirror github to gitee
+on:
+  schedule:
+    - cron: "0 20 * * SUN"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Mirror the Github repos to Gitee.
+      uses: Yikun/hub-mirror-action@v0.11
+      with:
+        src: github/wangkexiong
+        dst: gitee/wangkexiong
+        # https://gitee.com/profile/sshkeys
+        dst_key: ${{ secrets.GITEE_PRIVATE_KEY }}
+        # https://gitee.com/profile/personal_access_tokens
+        dst_token:  ${{ secrets.GITEE_TOKEN }}
+        # account_type: user
+        timeout: 600
+        force_update: true
+        black_list: docker-jetbrains-license-server
