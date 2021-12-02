@@ -1,0 +1,15 @@
+#!/bin/env expect
+
+expr {srand([clock seconds])}
+set XIAOMI_BUSHU [expr {$env(XIAOMI_BASE) + int(rand()*10000)}]
+
+set timeout 600
+spawn python wechat_mi.pyc
+
+expect {
+    "请输入要修改的微信运动步数：" {send "$XIAOMI_BUSHU\r"; exp_continue}
+    "请输入小米运动手机账号：" {send "$env(XIAOMI_SHOUJI)\r"; exp_continue}
+    "请输入小米运动密码：" {send "$env(XIAOMI_MIMA)\r"}
+}
+
+expect eof

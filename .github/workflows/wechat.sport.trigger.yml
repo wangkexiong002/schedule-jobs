@@ -1,0 +1,23 @@
+name: Manually trigger wechat sport
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: "actions/checkout@v2"
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.9.7'
+      - name: Update steps
+        run: |
+          python --version
+          cd wechat.sport
+          sudo apt install expect -y
+          pip install -r requirements.txt
+          expect wechat_mi.exp
+        env:
+          XIAOMI_BASE: ${{ secrets.XIAOMI_BASE }}
+          XIAOMI_SHOUJI: ${{ secrets.XIAOMI_SHOUJI}}
+          XIAOMI_MIMA: ${{ secrets.XIAOMI_MIMA}}
