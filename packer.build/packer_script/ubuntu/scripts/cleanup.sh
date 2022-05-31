@@ -1,55 +1,48 @@
-#!/bin/bash
-set -Eeux;
+#!/bin/sh -eux
 
-# Get ubuntu codename
-source /etc/os-release
+echo "remove linux-headers"
+dpkg --list \
+  | awk '{ print $2 }' \
+  | grep 'linux-headers' \
+  | xargs apt-get -y purge;
 
-# Delete all Linux headers
-PKGS_LINUX_HEADERS=( $(dpkg --list | awk '{ print $2 }' | grep 'linux-headers' || true) );
-apt-get -y purge --autoremove "${PKGS_LINUX_HEADERS[@]:+${PKGS_LINUX_HEADERS[@]}}";
+echo "remove linux-source package"
+dpkg --list \
+    | awk '{ print $2 }' \
+    | grep linux-source \
+    | xargs apt-get -y purge;
 
-# Delete Linux source
-PKGS_LINUX_SOURCE=( $(dpkg --list | awk '{ print $2 }' | grep 'linux-source' || true) );
-apt-get -y purge --autoremove "${PKGS_LINUX_SOURCE[@]:+${PKGS_LINUX_SOURCE[@]}}";
+echo "remove all development packages"
+dpkg --list \
+    | awk '{ print $2 }' \
+    | grep -- '-dev\(:[a-z0-9]\+\)\?$' \
+    | xargs apt-get -y purge;
 
-# Delete development packages
-PKGS_DEV=( $(dpkg --list | awk '{ print $2 }' | grep -- '-dev$' || true) );
-apt-get -y purge --autoremove "${PKGS_DEV[@]:+${PKGS_DEV[@]}}";
-# delete docs packages
-PKGS_DOC=( $(dpkg --list | awk '{ print $2 }' | grep -- '-doc$' || true) );
-apt-get -y purge --autoremove "${PKGS_DOC[@]:+${PKGS_DOC[@]}}";
+echo "remove docs packages"
+dpkg --list \
+    | awk '{ print $2 }' \
+    | grep -- '-doc$' \
+    | xargs apt-get -y purge;
 
-# Delete X11 libraries
-PKGS_X11=( \
-  libx11-data \
-  xauth \
-  libxmuu1 \
-  libxcb1 \
-  libx11-6 \
-  libxext6 \
-  libxau6 \
-);
-apt-get -y purge --autoremove "${PKGS_X11[@]}";
+echo "remove X11 libraries"
+apt-get -y purge libx11-data xauth libxmuu1 libxcb1 libx11-6 libxext6 libxau6;
 
-# Delete obsolete networking
-PKGS_OBSOLETE_NETWORKING=( \
-  ppp \
-  pppconfig \
-  pppoeconf \
-);
-apt-get -y purge --autoremove "${PKGS_OBSOLETE_NETWORKING[@]}";
+echo "remove obsolete networking packages"
+apt-get -y purge ppp pppconfig pppoeconf;
 
-# Delete oddities
-PKGS_ODDITIES=( \
-  popularity-contest \
-  installation-report \
-  command-not-found* \
-  friendly-recovery \
-  bash-completion \
-  fonts-ubuntu-font-family-console \
-  laptop-detect \
-);
-apt-get -y purge --autoremove "${PKGS_ODDITIES[@]}";
+echo "remove packages we don't need"
+apt-get -y purge popularity-contest command-not-found* friendly-recovery bash-completion laptop-detect motd-news-config usbutils grub-legacy-ec2
+
+# 22.04+ don't have this
+echo "remove the fonts-ubuntu-font-family-console"
+apt-get -y purge fonts-ubuntu-font-family-console || true;
+
+# 21.04+ don't have this
+echo "remove the installation-report"
+apt-get -y purge popularity-contest installation-report || true;
+
+echo "remove the console font"
+apt-get -y purge fonts-ubuntu-console || true;
 
 # Remove specific Linux kernels, such as linux-image-3.11.0-15-generic but
 # keeps the current kernel and does not touch the virtual packages,
@@ -58,16 +51,16 @@ PKGS_LINUX_IMAGE=( $(dpkg --list | awk '{ print $2 }' | grep -E '(linux-image-.*
 apt-get -y purge --autoremove "${PKGS_LINUX_IMAGE[@]:+${PKGS_LINUX_IMAGE[@]}}";
 apt-get -y purge --autoremove linux-cloud-tools*
 
-# Exlude the files we don't need w/o uninstalling linux-firmware
-#echo "==> Setup dpkg excludes for linux-firmware"
+# Exclude the files we don't need w/o uninstalling linux-firmware
+#echo "Setup dpkg excludes for linux-firmware"
 #cat <<_EOF_ | cat >> /etc/dpkg/dpkg.cfg.d/excludes
-##PACKER-BEGIN
+##BENTO-BEGIN
 #path-exclude=/lib/firmware/*
 #path-exclude=/usr/share/doc/linux-firmware/*
-##PACKER-END
+##BENTO-END
 #_EOF_
 
-# Delete the massive firmware packages
+#echo "delete the massive firmware files"
 #rm -rf /lib/firmware/*
 #rm -rf /usr/share/doc/linux-firmware/*
 
@@ -102,6 +95,8 @@ PKGS_OTHER=( \
   tcpd \
   byobu git* \
   binutils make manpages libmpc3 \
+  plymouth *gnome* \
+  snapd \
 );
 apt-get -y purge --autoremove "${PKGS_OTHER[@]}";
 
@@ -111,68 +106,36 @@ PKGS_OTHER_ADDITION=( \
 );
 apt-get -y purge --autoremove "${PKGS_OTHER_ADDITION[@]}";
 
-# Check to clean again...
+echo "autoremoving packages and cleaning apt data"
 apt-get -y autoremove;
-apt-get -y clean all;
+apt-get -y clean;
 rm -rf /var/lib/apt/*;
 mkdir -p /var/lib/apt/lists;
 rm -rf /var/log/vboxadd*
 
-# Remove docs
+echo "remove /usr/share/doc/"
 rm -rf /usr/share/doc/*
 
-# Remove caches
+echo "remove /var/cache"
 find /var/cache -type f -exec rm -rf {} \;
 
-# truncate any logs that have built up during the install
+echo "truncate any logs that have built up during the install"
 find /var/log -type f -exec truncate --size=0 {} \;
 
-# Blank netplan machine-id (DUID) so machines get unique ID generated on boot.
+echo "blank netplan machine-id (DUID) so machines get unique ID generated on boot"
 truncate -s 0 /etc/machine-id
 
-# remove the contents of /tmp and /var/tmp
+echo "remove the contents of /tmp and /var/tmp"
 rm -rf /tmp/* /var/tmp/*
 
-# clear the history so our install isn't there
-export HISTSIZE=0
+echo "force a new random seed to be generated"
+rm -f /var/lib/systemd/random-seed
+
+echo "clear the history so our install isn't there"
 rm -f /root/.wget-hsts
 
 # remove floppy
 sed -i '/.*\/media\/floppy.*/d' /etc/fstab
 
-# ensure apt source
-truncate -s 0 /etc/apt/apt.conf
-
-if [ x"${UBUNTU_CODENAME}" != "x" ]; then
-  cat << _EOF_ > /etc/apt/sources.list
-deb mirror://mirrors.ubuntu.com/mirrors.txt ${UBUNTU_CODENAME} main restricted
-#deb-src mirror://mirrors.ubuntu.com/mirrors.txt ${UBUNTU_CODENAME} main restricted
-
-deb mirror://mirrors.ubuntu.com/mirrors.txt ${UBUNTU_CODENAME}-updates main restricted
-#deb-src mirror://mirrors.ubuntu.com/mirrors.txt ${UBUNTU_CODENAME}-updates main restricted
-
-deb mirror://mirrors.ubuntu.com/mirrors.txt ${UBUNTU_CODENAME} universe
-#deb-src mirror://mirrors.ubuntu.com/mirrors.txt ${UBUNTU_CODENAME} universe
-deb mirror://mirrors.ubuntu.com/mirrors.txt ${UBUNTU_CODENAME}-updates universe
-#deb-src mirror://mirrors.ubuntu.com/mirrors.txt ${UBUNTU_CODENAME}-updates universe
-
-deb mirror://mirrors.ubuntu.com/mirrors.txt ${UBUNTU_CODENAME} multiverse
-#deb-src mirror://mirrors.ubuntu.com/mirrors.txt ${UBUNTU_CODENAME} multiverse
-deb mirror://mirrors.ubuntu.com/mirrors.txt ${UBUNTU_CODENAME}-updates multiverse
-#deb-src mirror://mirrors.ubuntu.com/mirrors.txt ${UBUNTU_CODENAME}-updates multiverse
-
-deb mirror://mirrors.ubuntu.com/mirrors.txt ${UBUNTU_CODENAME}-backports main restricted universe multiverse
-#deb-src mirror://mirrors.ubuntu.com/mirrors.txt ${UBUNTU_CODENAME}-backports main restricted universe multiverse
-
-#deb http://archive.canonical.com/ubuntu ${UBUNTU_CODENAME} partner
-#deb-src http://archive.canonical.com/ubuntu ${UBUNTU_CODENAME} partner
-
-deb mirror://mirrors.ubuntu.com/mirrors.txt ${UBUNTU_CODENAME}-security main restricted
-#deb-src mirror://mirrors.ubuntu.com/mirrors.txt ${UBUNTU_CODENAME}-security main restricted
-deb mirror://mirrors.ubuntu.com/mirrors.txt ${UBUNTU_CODENAME}-security universe
-#deb-src mirror://mirrors.ubuntu.com/mirrors.txt ${UBUNTU_CODENAME}-security universe
-deb mirror://mirrors.ubuntu.com/mirrors.txt ${UBUNTU_CODENAME}-security multiverse
-#deb-src mirror://mirrors.ubuntu.com/mirrors.txt ${UBUNTU_CODENAME}-security multiverse
-_EOF_
-fi
+export HISTSIZE=0
 

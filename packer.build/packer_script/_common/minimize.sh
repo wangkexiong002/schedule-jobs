@@ -20,20 +20,21 @@ if [ "x${swapuuid}" != "x" ]; then
   dd if=/dev/zero of="${swappart}" bs=1M || echo "dd exit code $? is suppressed"
   /sbin/mkswap -U "${swapuuid}" "${swappart}"
 else
-  if [ -f /swapfile ]; then
-    /sbin/swapoff /swapfile
+  swapfile=$(cat /etc/fstab | grep -v "^#" | awk '{if ($3=="swap") printf $1}')
+  if [ "x${swapfile}" != "x" ] && [ -f ${swapfile} ]; then
+    /sbin/swapoff ${swapfile}
+    sed -i "/^${swapfile//\//\\/}/d" /etc/fstab
+
+    # The reason why not using fallocate
+    # https://unix.stackexchange.com/questions/294600/i-cant-enable-swap-space-on-centos-7
+    rm -rf ${swapfile}
   fi
 
-  # The reason why not using fallocate
-  # https://unix.stackexchange.com/questions/294600/i-cant-enable-swap-space-on-centos-7
-  rm -rf /swapfile
-  dd if=/dev/zero of=/swapfile count=2048 bs=1M
-  chmod 600 /swapfile
-  /sbin/mkswap /swapfile
-
-  if ! cat /etc/fstab | grep -v "^#" | awk '{print $3}' | grep -q swap; then
-    echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-  fi
+  mkdir -p /swap
+  dd if=/dev/zero of=/swap/swapfile count=2048 bs=1M
+  chmod 600 /swap/swapfile
+  /sbin/mkswap /swap/swapfile
+  echo '/swap/swapfile swap swap defaults 0 0' | sudo tee -a /etc/fstab
 fi
 
 # Whiteout root

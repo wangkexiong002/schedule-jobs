@@ -31,7 +31,7 @@ EOF
 
 # Clean and nuke the package from orbit
 rm -rf /var/log/unattended-upgrades;
-apt-get -y purge unattended-upgrades;
+apt-get -y purge unattended-upgrades ubuntu-release-upgrader-core;
 
 # Update the package list
 apt-get -y dist-upgrade -o Dpkg::Options::="--force-confnew";

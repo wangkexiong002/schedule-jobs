@@ -125,6 +125,7 @@
         "packer_script/ubuntu/scripts/update.sh",
         "packer_script/_common/virtualbox.sh",
         "packer_script/ubuntu/scripts/cleanup.sh",
+        "packer_script/ubuntu/scripts/aptsource.sh",
         "packer_script/_common/minimize.sh"
       ],
       "type": "shell"
