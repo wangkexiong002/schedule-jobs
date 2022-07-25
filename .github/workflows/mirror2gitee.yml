@@ -2,8 +2,9 @@ name: Weekly mirror github to gitee
 on:
   schedule:
     - cron: "0 20 * * SUN"
+
 jobs:
-  build:
+  Mirror:
     runs-on: ubuntu-latest
     steps:
     - name: Mirror the Github repos to Gitee.

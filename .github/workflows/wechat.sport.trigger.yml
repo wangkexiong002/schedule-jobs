@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  UpdateWechatSports:
     runs-on: ubuntu-latest
     steps:
       - uses: "actions/checkout@v2"
