@@ -44,7 +44,6 @@
         "{{user `iso_directory`}}/{{user `iso_name`}}",
         "{{user `mirror`}}/{{user `mirror_directory`}}/{{user `iso_name`}}"
       ],
-      "iso_checksum_type": "{{user `iso_checksum_type`}}",
       "iso_checksum": "{{user `iso_checksum`}}",
       "ssh_username": "vagrant",
       "ssh_password": "vagrant",
@@ -96,7 +95,6 @@
         "{{user `iso_directory`}}/{{user `iso_name`}}",
         "{{user `mirror`}}/{{user `mirror_directory`}}/{{user `iso_name`}}"
       ],
-      "iso_checksum_type": "{{user `iso_checksum_type`}}",
       "iso_checksum": "{{user `iso_checksum`}}",
       "communicator": "ssh",
       "ssh_username": "vagrant",
@@ -138,9 +136,9 @@
     },
     [
       {
-      "type": "vagrant",
-      "compression_level": "9",
-      "output": "{{user `build_directory`}}/{{user `box_basename`}}-{{.Provider}}.box"
+        "type": "vagrant",
+        "compression_level": "9",
+        "output": "{{user `build_directory`}}/{{user `box_basename`}}-{{.Provider}}.box"
       },
       {
         "type": "vagrant-cloud",
@@ -171,9 +169,8 @@
     "cloud_version": "{{isotime \"20060102\"}}",
     "cloud_tag": "wangkexiong/ubuntu-bionic",
     "mirror": "http://old-releases.ubuntu.com",
-    "mirror_directory": "releases/18.04.5",
+    "mirror_directory": "releases/18.04",
     "iso_name": "ubuntu-18.04.5-server-amd64.iso",
-    "iso_checksum_type": "sha256",
     "iso_checksum": "8c5fc24894394035402f66f3824beb7234b757dd2b5531379cb310cedfdf0996",
     "iso_directory": "packer_iso",
     "http_proxy": "{{env `http_proxy`}}",
