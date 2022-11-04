@@ -41,7 +41,8 @@ apt-get install -y cifs-utils
 
 case "${PACKER_BUILDER_TYPE}" in
 virtualbox-iso|virtualbox-ovf)
-  apt-get install -y gcc make
+  # Install bzip2 and tar for Jammy release
+  apt-get install -y gcc make bzip2 tar
   ;;
 esac
 
